@@ -6,21 +6,41 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:playwright": "playwright test",
+    "test:playwright:ui": "playwright test --ui",
+    "playwright:install": "playwright install"
   },
   "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "bcryptjs": "^3.0.3",
     "next": "16.1.6",
+    "prisma": "^6.13.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supertest": "^6.0.3",
+    "@vitest/ui": "^4.0.18",
+    "bcrypt": "^6.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "fast-check": "^4.5.3",
+    "playwright": "^1.58.2",
+    "supertest": "^7.2.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }
