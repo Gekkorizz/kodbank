@@ -1,26 +1,203 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: #1D9E7F;
+  --color-primary-dark: #158369;
+  --color-primary-light: #3FB39F;
+  --color-success: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  --color-dark-900: #0F172A;
+  --color-dark-800: #1E293B;
+  --color-dark-700: #334155;
+  --color-gray-400: #9CA3AF;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0F172A;
+  color: #FFFFFF;
+  font-family: inherit;
 }
+
+@layer utilities {
+  /* Dark mode utilities */
+  .bg-dark-900 {
+    background-color: #0F172A;
+  }
+
+  .bg-dark-800 {
+    background-color: #1E293B;
+  }
+
+  .bg-dark-700 {
+    background-color: #334155;
+  }
+
+  .border-dark-700 {
+    border-color: #334155;
+  }
+
+  .text-gray-400 {
+    color: #9CA3AF;
+  }
+
+  /* Card base styling */
+  .card {
+    border-radius: 0.75rem;
+    border: 1px solid #334155;
+    background-color: #1E293B;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-hover {
+    border-radius: 0.75rem;
+    border: 1px solid #334155;
+    background-color: #1E293B;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 200ms ease-out;
+  }
+
+  .card-hover:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Button base */
+  .btn {
+    display: inline-flex;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 200ms ease-out;
+    outline: none;
+  }
+
+  .btn:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(29, 158, 127, 0.1), 0 0 0 5px #1D9E7F;
+  }
+
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .btn-primary {
+    background-color: #1D9E7F;
+    color: #0F172A;
+  }
+
+  .btn-primary:hover {
+    background-color: #158369;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-secondary {
+    border: 1px solid #334155;
+    background-color: #1E293B;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background-color: #334155;
+  }
+
+  .btn-danger {
+    background-color: #EF4444;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #DC2626;
+  }
+
+  .btn-danger:active {
+    transform: scale(0.95);
+  }
+
+  /* Form inputs */
+  .input {
+    border-radius: 0.75rem;
+    border: 1px solid #334155;
+    background-color: #0F172A;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: white;
+    outline: none;
+    transition: all 200ms ease-out;
+  }
+
+  .input::placeholder {
+    color: #9CA3AF;
+  }
+
+  .input:focus {
+    border-color: #1D9E7F;
+    box-shadow: 0 0 0 3px rgba(29, 158, 127, 0.1);
+  }
+
+  .input:disabled {
+    background-color: #334155;
+    color: #9CA3AF;
+  }
+
+  /* Label styling */
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+  }
+
+  /* Helper text */
+  .helper-text {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+  }
+
+  /* Error text */
+  .error-text {
+    font-size: 0.75rem;
+    color: #EF4444;
+  }
+
+  /* Success text */
+  .success-text {
+    font-size: 0.75rem;
+    color: #10B981;
+  }
+
+  /* Warning text */
+  .warning-text {
+    font-size: 0.75rem;
+    color: #F59E0B;
+  }
+
+  /* Skeleton loader shimmer effect */
+  .skeleton {
+    border-radius: 0.5rem;
+    background-color: #334155;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+

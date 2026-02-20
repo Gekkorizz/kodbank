@@ -6,18 +6,23 @@ import {
   setAuthCookie,
   verifyPassword,
 } from "@/lib/auth";
+import { loginSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body ?? {};
 
-    if (!email || !password) {
+    // Validate input against schema
+    const validation = loginSchema.safeParse(body);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "email and password are required" },
-        { status: 400 },
+        { error: "Invalid email or password" },
+        { status: 401 },
       );
     }
+
+    const { email, password } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -37,8 +42,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        token: userToken.token,
-        expiresAt: userToken.expiresAt,
+        success: true,
         user: {
           id: user.id,
           email: user.email,

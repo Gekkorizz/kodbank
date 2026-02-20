@@ -1,20 +1,30 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
+import { registerSchema } from "@/lib/validation";
+import { ZodError } from "zod";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, confirmPassword, fullName } = body ?? {};
 
-    if (!email || !password || !confirmPassword) {
+    // Validate input against schema
+    const validation = registerSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errors = validation.error.flatten();
+      const firstError = Object.values(errors.fieldErrors)[0]?.[0];
+
       return NextResponse.json(
-        { error: "email, password and confirmPassword are required" },
+        { error: firstError || "Validation failed" },
         { status: 400 },
       );
     }
 
-    if (password !== confirmPassword) {
+    const { email, password, confirmPassword, fullName } = validation.data;
+
+    // Double-check password match (redundant but defensive)
+    if ((password ?? "").trim() !== (confirmPassword ?? "").trim()) {
       return NextResponse.json(
         { error: "Passwords do not match" },
         { status: 400 },
@@ -27,7 +37,7 @@ export async function POST(request: Request) {
 
     if (existing) {
       return NextResponse.json(
-        { error: "A user with this email already exists" },
+        { error: "This email is already registered" },
         { status: 409 },
       );
     }
