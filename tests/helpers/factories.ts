@@ -5,7 +5,8 @@ const prisma = new PrismaClient();
 
 export class UserFactory {
   static async build(overrides = {}) {
-    const password = await bcrypt.hash('password123', 10);
+    // Password must meet policy: 8+ chars, uppercase, lowercase, number, special char
+    const password = await bcrypt.hash('TestPass123!', 10);
     return {
       email: 'test@example.com',
       fullName: 'Test User',

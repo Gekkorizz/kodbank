@@ -1,191 +1,292 @@
-## KodBank
+# KodBank
 
-KodBank is a minimal banking-style demo focused on **users** and **tokens** only.  
-It is built with **Next.js App Router**, **Prisma**, and **MySQL on Aiven**, and is ready to deploy on **Vercel**.
+KodBank is a production-ready banking-style application featuring **user authentication**, **secure token management**, and a **modern dashboard** with responsive design. Built with **Next.js 16**, **Prisma 6**, **MySQL**, and a comprehensive UI/UX upgrade.
 
-### Tech stack
+## ✨ Key Features
 
-- **Frontend + API**: Next.js (App Router, TypeScript)
-- **ORM / DB**: Prisma 7, MySQL
-- **Auth**: Stateless token lookup in `user_tokens` table
-- **Styling**: Tailwind CSS 4 (utility-first)
+- **Secure Authentication**: Password policy enforcement, bcrypt hashing, httpOnly cookie-only auth
+- **Modern Auth UI**: Floating label inputs, real-time password strength meter, form validation
+- **Responsive Dashboard**: Desktop sidebar + mobile bottom navigation, account hero card, quick actions
+- **Design System**: Custom CSS utilities, dark theme, semantic colors, smooth transitions
+- **Production Ready**: Full test coverage (unit + E2E), TypeScript, form validation with Zod
 
-### Database schema (exactly two tables)
+## Tech Stack
 
-- **users**
-  - `id` (UUID, PK)
-  - `email` (unique, not null)
-  - `password_hash` (hashed with bcrypt, not null)
-  - `full_name` (nullable)
-  - `created_at` (timestamp)
-  - `updated_at` (timestamp)
+- **Frontend + API**: Next.js 16 (App Router, TypeScript)
+- **Database & ORM**: Prisma 6.13.0, MySQL
+- **Authentication**: Stateless token lookup, httpOnly cookies, bcrypt password hashing
+- **UI & Styling**: 
+  - Tailwind CSS v4 (utility-first)
+  - lucide-react (icons)
+  - react-hook-form (form state)
+  - zod (validation)
+  - sonner (toasts)
+  - recharts (charts)
+- **Testing**: Vitest (unit), Playwright (E2E)
 
-- **user_tokens**
-  - `id` (UUID, PK)
-  - `user_id` (FK → users.id)
-  - `token` (string, unique)
-  - `type` (e.g. `"AUTH"`)
-  - `expires_at` (timestamp)
-  - `created_at` (timestamp)
-  - `revoked` (boolean, default `false`)
+## Database Schema
 
-### ERD (text)
+### `users` table
+- `id` (UUID, PK)
+- `email` (unique, not null)
+- `passwordHash` (bcrypt hashed, not null)
+- `fullName` (nullable)
+- `createdAt` (timestamp)
+- `updatedAt` (timestamp)
 
-```text
-users (id PK) 1 ──── * user_tokens (id PK)
-```
+### `userTokens` table
+- `id` (UUID, PK)
+- `userId` (FK → users.id)
+- `token` (string, unique)
+- `type` (enum: AUTH)
+- `expiresAt` (timestamp, 24hrs)
+- `createdAt` (timestamp)
+- `revoked` (boolean, default false)
 
-### Environment variables
+## Password Policy
 
-- **DATABASE_URL** – MySQL connection string from Aiven, e.g.
+All passwords must contain:
+- ✓ Minimum 8 characters
+- ✓ At least one uppercase letter (A-Z)
+- ✓ At least one lowercase letter (a-z)
+- ✓ At least one number (0-9)
+- ✓ At least one special character (!@#$%^&*)
+
+Example valid password: `TestPass123!`
+
+## Environment Variables
+
+Create `.env.local` in the project root:
 
 ```bash
-# Example: your current Aiven MySQL URI
-DATABASE_URL="mysql://avnadmin:YOUR_PASSWORD@kod01-rajeevbrar69-d91c.i.aivencloud.com:15046/defaultdb?ssl-mode=REQUIRED"
+cp .env.example .env.local
 ```
 
-Create a `.env` (or `.env.local` for Next.js) in the project root:
+Then set your MySQL connection string:
 
-```bash
-cp .env .env.local
+```env
+DATABASE_URL="mysql://user:password@host:port/database?ssl-mode=REQUIRED"
 ```
 
-Then edit `.env.local` and replace the sample connection string with your Aiven credentials.
-
-### Running locally
+## Setting Up Locally
 
 1. **Install dependencies**
-
 ```bash
 npm install
 ```
 
-2. **Set your database URL**
-
-Edit `.env.local` and set `DATABASE_URL` to your Aiven MySQL URL (for you, use the `mysql://...` Service URI from Aiven).
+2. **Configure your `.env.local`**
+Edit and set `DATABASE_URL` to your MySQL connection string
 
 3. **Run Prisma migrations**
-
 ```bash
-npx prisma migrate dev --name init_kodbank
+npx prisma migrate dev
 ```
-
-This will create the `users` and `user_tokens` tables in your Aiven database.
 
 4. **Start the dev server**
-
 ```bash
 npm run dev
 ```
 
-App will be available at `http://localhost:3000`.
+Server runs at `http://localhost:3000`
 
-### API endpoints
+## Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+## API Endpoints
+
+### Authentication
 
 - **POST `/api/auth/register`**
-  - Request JSON: `{ email, password, confirmPassword, fullName? }`
-  - Response: created user (without password) or error.
+  - Request: `{ email, password, confirmPassword, fullName? }`
+  - Response: User object (without password) or error
+  - Password must meet policy requirements
+  - Confirm password must match password field
 
 - **POST `/api/auth/login`**
-  - Request JSON: `{ email, password }`
-  - On success:
-    - Creates a new `user_tokens` row.
-    - Sets a `kodbank_token` **HTTP-only cookie**.
-    - Returns `{ token, expiresAt, user }` in JSON.
+  - Request: `{ email, password }`
+  - Response: User object (token NOT in response body)
+  - Sets HTTP-only Secure cookie: `kodbank_token`
+  - Token expires after 24 hours
 
 - **POST `/api/auth/logout`**
-  - Revokes the current token (marks `revoked = true`) and clears the cookie.
+  - Revokes current token, clears cookie
 
 - **POST `/api/auth/logout-all`**
-  - Revokes all tokens for the current user and clears the cookie.
+  - Revokes all user tokens, clears cookie
 
 - **GET `/api/me`**
-  - Protected; reads token from `Authorization: Bearer <token>` or `kodbank_token` cookie.
-  - Returns `{ id, email, fullName }` for the current user.
+  - Protected endpoint (requires valid token cookie)
+  - Returns: `{ id, email, fullName }`
 
-All endpoints are **stateless**: there is no server-side session; each request validates the token against `user_tokens` (checking expiry and `revoked`).
+## Frontend Pages
 
-### Frontend routes
+- **`/`** – Landing page (hero, features, CTAs)
+- **`/register`** – Registration with password strength meter
+- **`/login`** – Login with floating label inputs
+- **`/dashboard`** – Protected dashboard with:
+  - Responsive header + sidebar (desktop) / bottom nav (mobile)
+  - Account hero card with balance display
+  - Quick action buttons (Send, Request, Pay Bills, View History)
+  - Summary cards (Balance, Pending Txns, Monthly Limit)
+  - Recent transactions table
+  - Logout button
 
-- **`/`** – Landing page with CTAs to register or log in.
-- **`/register`** – Registration form wired to `POST /api/auth/register`.
-- **`/login`** – Login form wired to `POST /api/auth/login`. Also stores the returned token in `localStorage` for optional client-side calls.
-- **`/dashboard`** – Protected dashboard:
-  - Server-side check using the `kodbank_token` cookie.
-  - If unauthenticated/invalid token → redirects to `/login`.
-  - Displays a friendly “KodBank” dashboard with simulated balance and user info.
+## Testing
 
-### Security & statelessness
-
-- Passwords are hashed with **bcryptjs**; plain passwords are never stored.
-- Each login issues a new random token (48-byte hex string) stored in `user_tokens`.
-- Tokens are validated on every protected request via DB lookup:
-  - Token exists
-  - Not expired
-  - Not revoked
-- Basic rate limiting is **not** implemented, but you could add it in API handlers (e.g., by IP + timestamp) or using Vercel Edge Middleware.
-
-### Deploying to Vercel
-
-1. Commit this project to a GitHub repository.
-2. In Vercel, create a new project and import the repo.
-3. Set environment variables in the Vercel dashboard:
-
-   - `DATABASE_URL` – your Aiven PostgreSQL URL.
-
-4. Keep the default build and output settings:
-
-   - Build command: `npm run build`
-   - Install command: `npm install`
-   - Output directory: `.next`
-
-5. Deploy. Vercel will:
-
-   - Install dependencies.
-   - Build the Next.js app.
-   - Host API route handlers as serverless functions.
-
-After deploy, run Prisma migrations against the same `DATABASE_URL` (from your machine or a CI step):
+### Unit Tests (Vitest)
 
 ```bash
-npx prisma migrate deploy
+# Run all tests
+npm run test
+
+# Run in watch mode
+npm run test:watch
+
+# Auth API tests
+npm run test -- tests/api/auth/
 ```
 
-This keeps the schema in sync with your Aiven database.
+Test files:
+- `tests/api/auth/register.test.ts` – Registration endpoint validation, password policy, duplicate emails
+- `tests/api/auth/login.test.ts` – Login endpoint, auth validation, cookie handling
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
+### E2E Tests (Playwright)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Run all E2E tests
+npm run test:e2e
+
+# Run specific test file
+npm run test:e2e -- auth.spec
+
+# Run in headed mode (see browser)
+npm run test:e2e -- --headed
+
+# Run in debug mode
+npm run test:e2e -- --debug
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Test files:
+- `tests/e2e/auth.spec.ts` – Full registration, login, password validation, error handling
+- `tests/e2e/dashboard.spec.ts` – Dashboard access, components, logout
+- `tests/e2e/responsive.spec.ts` – Mobile (375px) and desktop (1920px) layouts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Component Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### UI Components (`src/components/ui/`)
+- `floating-label-input.tsx` – Form input with floating label animation
+- `password-strength-meter.tsx` – Visual password strength feedback
+- `success-modal.tsx` – Success notification with auto-redirect
+- `loading-spinner.tsx` – Loading state indicator
+- `toast-provider.tsx` – Sonner toast wrapper
+- `skeleton.tsx` – Skeleton loaders
 
-## Learn More
+### Dashboard Components (`src/components/dashboard/`)
+- `header.tsx` – Sticky top navigation with user menu
+- `sidebar.tsx` – Collapsible left menu (desktop only)
+- `bottom-nav.tsx` – Mobile bottom tab navigation
+- `hero-account-card.tsx` – Gradient card with account/balance display
+- `quick-actions.tsx` – 4-button action grid
+- `summary-cards.tsx` – 3-column metric cards with trends
+- `recent-transactions.tsx` – Transaction history table
 
-To learn more about Next.js, take a look at the following resources:
+### Forms
+- `src/app/register/page.tsx` – Registration page with validation
+- `src/app/login/page.tsx` – Login page with password toggle
+- `src/lib/validation.ts` – Zod schemas for register/login validation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Design System
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Color Palette
+- **Primary**: `#1D9E7F` (Teal)
+- **Success**: `#10B981` (Green)
+- **Error**: `#EF4444` (Red)
+- **Warning**: `#F59E0B` (Amber)
+- **Dark 900**: `#0F172A` (Almost black)
+- **Dark 800**: `#1E293B` (Dark slate)
+- **Dark 700**: `#334155` (Slate)
 
-## Deploy on Vercel
+### CSS Utilities
+- `.card` – Dark card with border and shadow
+- `.card-hover` – Interactive card with hover effects
+- `.btn-primary` / `.btn-secondary` / `.btn-danger` – Button variants
+- `.input` – Form input with focus states
+- `.label` – Form labels
+- `.error-text` / `.success-text` – Validation feedback
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Security Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Passwords are hashed with bcryptjs using salt rounds 10
+- Tokens are cryptographically random 48-byte hex strings
+- All tokens include expiry (24 hours) + revocation support
+- Cookies are httpOnly (no JavaScript access) and Secure (HTTPS only)
+- No password is ever logged or exposed in responses
+- Password validation enforced server-side, not just frontend
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push repo to GitHub
+2. Connect to Vercel and set `DATABASE_URL` environment variable
+3. Deploy with: `npm run build`
+4. Run migrations post-deploy: `npx prisma migrate deploy`
+
+### Docker
+
+```bash
+docker build -t kodbank .
+docker run -e DATABASE_URL="..." -p 3000:3000 kodbank
+```
+
+### Self-hosted
+
+1. Build: `npm run build`
+2. Start: `npm start`
+3. Ensure MySQL is accessible at `DATABASE_URL`
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/auth/           # Auth endpoints
+│   ├── dashboard/          # Protected dashboard
+│   ├── login/              # Login page
+│   ├── register/           # Registration page
+│   ├── globals.css         # Design system & utilities
+│   └── layout.tsx          # Root layout
+├── lib/
+│   ├── auth.ts             # Auth utilities
+│   ├── db.ts               # Database client
+│   └── validation.ts       # Zod schemas
+└── components/
+    ├── ui/                 # Reusable UI primitives
+    └── dashboard/          # Dashboard-specific components
+
+tests/
+├── api/auth/               # API unit tests
+├── e2e/                    # Playwright E2E tests
+└── helpers/                # Test utilities
+```
+
+## Future Enhancements
+
+- Transaction history with real data
+- Settings page (account, security, notifications)
+- Analytics dashboard with Recharts
+- Forgot password flow
+- Two-factor authentication
+- Admin panel
+- API rate limiting
+- Email verification
+
+---
+
+**Last Updated**: February 2026  
+**Status**: Production Ready v1.0

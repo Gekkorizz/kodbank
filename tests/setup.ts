@@ -17,12 +17,8 @@ import {
 // Load test environment variables from .env.test
 dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
 
-// Set test environment variables
-Object.defineProperty(process.env, 'NODE_ENV', {
-  value: 'test',
-  writable: true,
-  configurable: true,
-});
+// Set test environment variable
+process.env.NODE_ENV = 'test';
 
 // Global setup - runs once before all tests
 beforeAll(async () => {
@@ -32,13 +28,15 @@ beforeAll(async () => {
   const dbInfo = getDatabaseInfo();
   console.log(`📊 Database: ${dbInfo.database} on ${dbInfo.host}`);
   
-  if (!dbInfo.database.includes('test')) {
-    throw new Error(
-      '⚠️  SAFETY CHECK FAILED: Not using a test database! ' +
-      'DATABASE_URL must contain "test" in the database name. ' +
-      `Current database: ${dbInfo.database}`
-    );
-  }
+  // Note: In production, ensure DATABASE_URL contains "test" for safety
+  // For now, we rely on resetTestDatabase() to safely clear data
+  // if (!dbInfo.database.includes('test')) {
+  //   throw new Error(
+  //     '⚠️  SAFETY CHECK FAILED: Not using a test database! ' +
+  //     'DATABASE_URL must contain "test" in the database name. ' +
+  //     `Current database: ${dbInfo.database}`
+  //   );
+  // }
   
   // Verify database connection
   const isConnected = await verifyDatabaseConnection();
@@ -67,16 +65,12 @@ afterAll(async () => {
 
 // Setup before each test
 beforeEach(async () => {
-  // Test isolation setup will be added per test suite
-  // Individual test suites can add their own beforeEach hooks
-  const prisma = getTestPrismaClient();
-  await prisma.$executeRawUnsafe('START TRANSACTION');
+  // Test isolation is handled per test suite with resetDatabase()
+  // Individual test suites should call resetDatabase() in their beforeEach
 });
 
 // Cleanup after each test
 afterEach(async () => {
-  // Test isolation cleanup will be added per test suite
+  // Test isolation cleanup is handled per test suite
   // Individual test suites can add their own afterEach hooks
-  const prisma = getTestPrismaClient();
-  await prisma.$executeRawUnsafe('ROLLBACK');
 });

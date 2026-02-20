@@ -23,7 +23,8 @@ describe('User Registration API', () => {
   it('should return 201 with user details for valid registration', async () => {
     const response = await postToRegister({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'TestPass123!',
+      confirmPassword: 'TestPass123!',
       fullName: 'Test User',
     });
 
@@ -40,16 +41,42 @@ describe('User Registration API', () => {
     expect(response.body).toHaveProperty('error');
   });
 
+  it('should return 400 for weak password', async () => {
+    const response = await postToRegister({
+      email: 'test@example.com',
+      password: 'weak',
+      confirmPassword: 'weak',
+      fullName: 'Test User',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/password|uppercase|lowercase|number|special/i);
+  });
+
+  it('should return 400 for mismatched passwords', async () => {
+    const response = await postToRegister({
+      email: 'test@example.com',
+      password: 'TestPass123!',
+      confirmPassword: 'Different123!',
+      fullName: 'Test User',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/match/i);
+  });
+
   it('should return 409 for duplicate email', async () => {
     await postToRegister({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'TestPass123!',
+      confirmPassword: 'TestPass123!',
       fullName: 'Test User',
     });
 
     const response = await postToRegister({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'TestPass123!',
+      confirmPassword: 'TestPass123!',
       fullName: 'Test User',
     });
 

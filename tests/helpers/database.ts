@@ -166,13 +166,15 @@ export async function withTransaction<T>(
  * Deletes all data from tables while preserving schema
  */
 export async function resetDatabase() {
-  const prisma = new PrismaClient();
+  const prisma = getTestPrismaClient();
 
-  const tables = await prisma.$queryRaw<Array<{ table_name: string }>>`SELECT table_name FROM information_schema.tables WHERE table_schema = 'kodbank_test'`;
-
-  for (const { table_name } of tables) {
-    if (table_name !== '_prisma_migrations') {
-      await prisma.$executeRawUnsafe(`TRUNCATE TABLE \`${table_name}\``);
-    }
+  try {
+    // Delete in correct order to respect foreign key constraints
+    // UserToken must be deleted before User due to foreign key
+    await prisma.userToken.deleteMany({});
+    await prisma.user.deleteMany({});
+  } catch (error) {
+    console.error('Error resetting database:', error);
+    throw error;
   }
 }
